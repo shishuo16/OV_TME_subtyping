@@ -8,6 +8,7 @@ Rscript TIME.subtyping.R counts.txt out_dir
 
 ### input
 counts.txt: reads counts matrix (gene x sample). Note: The matrix must include marker genes from different subtypes, totaling 175 genes, as specified in the file reference/TIME.subtype.markers.rds.
+
 out_dir: output directory
 
 ### output
@@ -22,6 +23,7 @@ Rscript OV.subtyping.R tpm.txt out_dir
 
 ### input
 tpm.txt: gene tpm matrix (gene x sample). Note: The matrix must include marker genes from different subtypes, totaling 55 genes, as specified in the file reference/OV.subtype.markers.rds. In addition, at least 500 other genes (as background genes for computation) must also be provided.
+
 out_dir: output directory
 
 ### output
