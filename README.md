@@ -1,6 +1,6 @@
 Methods for tumor immune microenvironment (TIME) subtyping and cancer cell subtyping in ovarian cancer.
 
-## TIME subtyping
+## 1. TIME subtyping
 
 ```
 Rscript TIME.subtyping.R counts.txt out_dir
@@ -14,7 +14,7 @@ out_dir: output directory
 TIME.subtyping.txt: two columns: sample, TIME.subtype
 
 
-## Ovarian cancer cell subtyping
+## 2. Ovarian cancer cell subtyping
 
 ```
 Rscript OV.subtyping.R tpm.txt out_dir
