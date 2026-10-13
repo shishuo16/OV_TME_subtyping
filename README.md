@@ -3,11 +3,11 @@ Methods for tumor immune microenvironment (TIME) subtyping and cancer cell subty
 ## 1. TIME subtyping
 
 ```
-Rscript TIME.subtyping.R counts.txt out_dir
+Rscript TIME.subtyping.R tpm.txt out_dir
 ```
 
 ### input
-- counts.txt: reads counts matrix (gene x sample). Note: The matrix must include marker genes from different TIME subtypes, totaling 175 genes, as specified in the file *reference/TIME.subtype.markers.rds*.
+- tpm.txt: gene tpm matrix (gene x sample). Note: The matrix must include marker genes from different TIME subtypes, totaling 175 genes, as specified in the file *reference/TIME.subtype.markers.rds*. In addition, at least 500 other genes (as background genes for computation) must also be provided.
 
 - out_dir: output directory
 
