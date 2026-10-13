@@ -1,37 +1,42 @@
 suppressPackageStartupMessages(library(dplyr))
-suppressPackageStartupMessages(library(tibble))
+suppressPackageStartupMessages(library(GSVA))
 
 args<-commandArgs(T)
 
-counts_file<-args[1]
+tpm_file<-args[1]
 out_dic<-args[2]
 
 dir.create(out_dic, recursive = T, showWarnings = F)
 
 gene<-readRDS("reference/TIME.subtype.markers.rds")
-mean_sd_v<-readRDS("reference/marker.mean_sd.rds")
+mean_sd_v<-readRDS("reference/gene.mean_sd.rds")
 
-counts_dat<-read.table(counts_file, head=T, row.names = 1, sep="\t", check.names = FALSE)
+tpm_dat<-read.table(tpm_file, head=T, row.names = 1, check.names = FALSE)
 
-counts_dat<-counts_dat[intersect(gene$gene, rownames(counts_dat)),]
-counts_dat<-counts_dat[rowSums(counts_dat > 0) > 0,]
-counts_dat<-apply(counts_dat, 2, function(x){x/sum(x)})
+tpm_dat<-tpm_dat[intersect(mean_sd_v$gene, rownames(tpm_dat)),]
+tpm_dat<-tpm_dat[rowSums(tpm_dat > 0) > 0,]
 
-for(i in 1:nrow(counts_dat)){
-  gene_i<-rownames(counts_dat)[i]
-  mean_i<-mean_sd_v %>% filter(gene==gene_i) %>% pull(mean_value)
-  sd_i<-mean_sd_v %>% filter(gene==gene_i) %>% pull(sd_value)
-  counts_dat[i,]<-(counts_dat[i,]-mean_i)/sd_i
-}
+#scale tpm
+mean_sd_v <- data.frame(gene=rownames(tpm_dat)) %>% left_join(mean_sd_v, by="gene")
+tpm_dat <- sweep(sweep(as.matrix(tpm_dat), 1, mean_sd_v$mean_value, "-"), 1, mean_sd_v$sd_value, "/")
 
-our_res<-NULL
-TIME.subtype_v<-c("Cps1","Cps2","Cps3","Cps4","Cps5")
-for(cc in TIME.subtype_v){
-  gg<-gene %>% filter((TIME.subtype==cc) & (gene %in% rownames(counts_dat))) %>% pull(gene)
-  our_res<-rbind(our_res, apply(counts_dat[gg,], 2, mean))
-}
-rownames(our_res)<-TIME.subtype_v
-TIME.subtype<-apply(our_res, 2, which.max) %>% as.data.frame() %>% mutate(TIME.subtype=rownames(our_res)[`.`]) %>% 
-  select(TIME.subtype) %>% rownames_to_column(var="sample")
+#clustering
+modules <- split(gene$gene, gene$TIME.subtype)
 
-write.table(TIME.subtype, fs::path(out_dic, "TIME.subtype.txt"), row.names = F, quote=F, sep="\t")
+ssgsea_par <- ssgseaParam(
+  exprData = as.matrix(tpm_dat),
+  geneSets = modules,
+  minSize = 5,
+  maxSize = 500,
+  normalize = TRUE
+)
+ssgsea_score <- gsva(
+  ssgsea_par,
+  verbose = TRUE
+)
+ssgsea_score<-as.data.frame(ssgsea_score)
+cluster<-apply(ssgsea_score, 2, which.max) %>% as.data.frame() %>% mutate(TIME.subtype=rownames(ssgsea_score)[`.`]) %>% select(TIME.subtype)
+cluster$sample<-rownames(cluster)
+cluster<-cluster[,c("sample", "TIME.subtype")]
+
+write.table(cluster, fs::path(out_dic, "TIME.subtype.txt"), row.names = F, quote=F, sep="\t")
